@@ -1,0 +1,82 @@
+// Fetch stock data using Ollama
+async function fetchStockData(symbol) {
+    const url = `https://api.ollama.com/stock/${symbol}`; // Example API endpoint
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Failed to fetch stock data');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching stock data:', error);
+        return null;
+    }
+}
+function displayStockData(data) {
+    document.getElementById('stock-symbol').textContent = data.symbol;
+    document.getElementById('stock-price').textContent = `$${data.price.toFixed(2)}`;
+    document.getElementById('stock-change').textContent = `${data.change.toFixed(2)}%`;
+    let currentStockSymbol = '';
+
+document.getElementById('search-button').addEventListener('click', () => {
+    const symbol = document.getElementById('stock-symbol-input').value.toUpperCase();
+    if (symbol) {
+        currentStockSymbol = symbol;
+        fetchStockData(symbol).then(data => {
+            if (data) {
+                displayStockData(data);
+            } else {
+                alert('Stock symbol not found. Please try again.');
+            }
+        });
+    } else {
+        alert('Please enter a stock symbol.');
+    }
+});
+
+document.getElementById('save-favorite').addEventListener('click', () => {
+    if (currentStockSymbol) {
+        saveFavoriteStock(currentStockSymbol);
+    } else {
+        alert('No stock selected. Please search for a stock first.');
+    }
+});
+
+document.getElementById('clear-favorites').addEventListener('click', () => {
+    localStorage.removeItem('favorites');
+    displayFavoriteStocks();
+});
+
+function saveFavoriteStock(symbol) {
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    if (!favorites.includes(symbol)) {
+        favorites.push(symbol);
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        displayFavoriteStocks();
+    }
+}
+
+function displayFavoriteStocks() {
+    const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    const favoritesList = document.getElementById('favorites-list');
+    favoritesList.innerHTML = favorites.map(symbol => `
+        <li>
+            ${symbol}
+            <button onclick="removeFavoriteStock('${symbol}')">Remove</button>
+        </li>
+    `).join('');
+}
+
+function removeFavoriteStock(symbol) {
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    favorites = favorites.filter(fav => fav !== symbol);
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+    displayFavoriteStocks();
+}
+// Example: Fetch data for Apple Inc. (AAPL)
+fetchStockData('AAPL').then(data => {
+    if (data) {
+        console.log('Stock Data:', data);
+    }
+});
